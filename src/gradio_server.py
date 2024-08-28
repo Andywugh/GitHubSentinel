@@ -24,15 +24,35 @@ def export_progress_by_date_range(repo, days):
 # 创建Gradio界面
 demo = gr.Interface(
     fn=export_progress_by_date_range,  # 指定界面调用的函数
-    title="GitHubSentinel",  # 设置界面标题
+    title="GitHubSentinel - 项目进展追踪助手",  # 设置更具描述性的界面标题
+    description="自动生成GitHub项目的进展报告，帮助您轻松跟踪开源项目的最新动态。",  # 添加描述，解释工具的用途
     inputs=[
         gr.Dropdown(
-            subscription_manager.list_subscriptions(), label="订阅列表", info="已订阅GitHub项目"
-        ),  # 下拉菜单选择订阅的GitHub项目
-        gr.Slider(value=2, minimum=1, maximum=7, step=1, label="报告周期", info="生成项目过去一段时间进展，单位：天"),
-        # 滑动条选择报告的时间范围
+            subscription_manager.list_subscriptions(), 
+            label="选择GitHub项目", 
+            info="从您已订阅的GitHub项目列表中选择",
+            interactive=True
+        ),  # 下拉菜单选择订阅的GitHub项目，增加交互性
+        gr.Slider(
+            value=2, 
+            minimum=1, 
+            maximum=30, 
+            step=1, 
+            label="报告周期（天）", 
+            info="选择要生成报告的时间范围，最长30天",
+            interactive=True
+        ),  # 扩大滑动条范围，增加灵活性
     ],
-    outputs=[gr.Markdown(), gr.File(label="下载报告")],  # 输出格式：Markdown文本和文件下载
+    outputs=[
+        gr.Markdown(label="报告预览"),  # 为Markdown输出添加标签
+        gr.File(label="下载完整报告"),  # 保持文件下载选项
+    ],
+    examples=[
+        ["langchain-ai/langchain", 7],
+        ["ollama/ollama", 3],
+    ],  # 添加示例，方便用户快速尝试
+    theme="huggingface",  # 使用预设主题美化界面
+    allow_flagging="never",  # 禁用标记功能，简化界面
 )
 
 if __name__ == "__main__":
