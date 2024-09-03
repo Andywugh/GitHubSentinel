@@ -54,6 +54,10 @@ class CommandHandler:
         parser_help = subparsers.add_parser('help', help='Show help message')
         parser_help.set_defaults(func=self.print_help)
 
+        # 添加 Hacker News 趋势报告命令
+        parser_hn_trend = subparsers.add_parser('hn-trend', help='Generate Hacker News trend report')
+        parser_hn_trend.set_defaults(func=self.generate_hacker_news_trend_report)
+
         return parser  # 返回配置好的解析器
 
     # 下面是各种命令对应的方法实现，每个方法都使用了相应的管理器来执行实际操作，并输出结果信息
@@ -85,3 +89,10 @@ class CommandHandler:
 
     def print_help(self, args=None):
         self.parser.print_help()  # 输出帮助信息
+
+    def generate_hacker_news_trend_report(self, args):
+        report, file_path = self.report_generator.generate_hacker_news_trend_report()
+        if report:
+            print(f"Generated Hacker News trend report: {file_path}")
+        else:
+            print("Failed to generate Hacker News trend report")

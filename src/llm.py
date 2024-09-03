@@ -10,6 +10,8 @@ class LLM:
         # 从TXT文件加载提示信息
         with open("prompts/report_prompt.txt", "r", encoding='utf-8') as file:
             self.system_prompt = file.read()
+        with open("prompts/hacker_news_prompt.txt", "r", encoding='utf-8') as file:
+            self.hacker_news_prompt = file.read()
 
     def generate_daily_report(self, markdown_content, dry_run=False):
         # 使用从TXT文件加载的提示信息
@@ -43,4 +45,30 @@ class LLM:
         except Exception as e:
             # 如果在请求过程中出现异常，记录错误并抛出
             LOG.error(f"生成报告时发生错误：{e}")
+            raise
+
+    def generate_hacker_news_trend_report(self, markdown_content, dry_run=False):
+        messages = [
+            {"role": "system", "content": self.hacker_news_prompt},
+            {"role": "user", "content": markdown_content},
+        ]
+
+        if dry_run:
+            LOG.info("Dry run mode enabled. Saving prompt to file.")
+            with open("hacker_news/prompt.txt", "w+") as f:
+                json.dump(messages, f, indent=4, ensure_ascii=False)
+            LOG.debug("Prompt已保存到 hacker_news/prompt.txt")
+            return "DRY RUN"
+
+        LOG.info("使用 GPT 模型开始生成 Hacker News 趋势报告。")
+        
+        try:
+            response = self.client.chat.completions.create(
+                model="gpt-4o-mini",
+                messages=messages
+            )
+            LOG.debug("GPT response: {}", response)
+            return response.choices[0].message.content
+        except Exception as e:
+            LOG.error(f"生成 Hacker News 趋势报告时发生错误：{e}")
             raise

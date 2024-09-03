@@ -30,6 +30,11 @@ def github_job(subscription_manager, github_client, report_generator, notifier, 
     LOG.info(f"[定时任务执行完毕]")
 
 
+def hacker_news_job(report_generator):
+    LOG.info("[开始执行 Hacker News 定时任务]")
+    report_generator.generate_hacker_news_trend_report()
+    LOG.info("[Hacker News 定时任务执行完毕]")
+
 def main():
     # 设置信号处理器
     signal.signal(signal.SIGTERM, graceful_shutdown)
@@ -41,19 +46,22 @@ def main():
     report_generator = ReportGenerator(llm)  # 创建报告生成器实例
     subscription_manager = SubscriptionManager(config.subscriptions_file)  # 创建订阅管理器实例
 
-    # 启动时立即执行（如不需要可注释）
+    # 启动时立即执行 GitHub 任务（如不需要可注释）
     github_job(subscription_manager, github_client, report_generator, notifier, config.freq_days)
 
-    # 安排每天的定时任务
+    # 安排每天的 GitHub 定时任务
     schedule.every(config.freq_days).days.at(
         config.exec_time
     ).do(github_job, subscription_manager, github_client, report_generator, notifier, config.freq_days)
+
+    # 安排每天的 Hacker News 定时任务
+    schedule.every().day.at("00:00").do(hacker_news_job, report_generator)
 
     try:
         # 在守护进程中持续运行
         while True:
             schedule.run_pending()
-            time.sleep(1)  # 短暂休眠以减少 CPU 使用
+            time.sleep(60)  # 将休眠时间增加到 60 秒，减少 CPU 使用
     except Exception as e:
         LOG.error(f"主进程发生异常: {str(e)}")
         sys.exit(1)

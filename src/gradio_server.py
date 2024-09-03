@@ -21,6 +21,11 @@ def export_progress_by_date_range(repo, days):
 
     return report, report_file_path  # 返回报告内容和报告文件路径
 
+def generate_hacker_news_trend_report():
+    # 生成 Hacker News 趋势报告
+    report, report_file_path = report_generator.generate_hacker_news_trend_report()  # 调用报告生成器
+    return report, report_file_path  # 返回报告内容和文件路径
+
 # 创建Gradio界面
 demo = gr.Interface(
     fn=export_progress_by_date_range,  # 指定界面调用的函数
@@ -34,6 +39,17 @@ demo = gr.Interface(
     ],
     outputs=[gr.Markdown(), gr.File(label="下载报告")],  # 输出格式：Markdown文本和文件下载
 )
+
+# 添加 Hacker News 趋势报告的界面
+hn_demo = gr.Interface(
+    fn=generate_hacker_news_trend_report,  # 指定生成 Hacker News 趋势报告的函数
+    title="Hacker News Trend Report",  # 设置界面标题
+    inputs=[],  # 不需要输入
+    outputs=[gr.Markdown(), gr.File(label="下载趋势报告")],  # 输出格式：Markdown文本和文件下载
+)
+
+# 将两个界面合并
+demo = gr.TabbedInterface([demo, hn_demo], ["GitHub Sentinel", "Hacker News Trend"])
 
 if __name__ == "__main__":
     demo.launch(share=True, server_name="0.0.0.0")  # 启动界面并设置为公共可访问
