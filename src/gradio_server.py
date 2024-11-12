@@ -7,6 +7,7 @@ from report_generator import ReportGenerator  # 导入报告生成器模块
 from llm import LLM  # 导入可能用于处理语言模型的LLM类
 from subscription_manager import SubscriptionManager  # 导入订阅管理器
 from logger import LOG  # 导入日志记录器
+from product_hunt_client import ProductHuntClient
 
 # 创建各个组件的实例
 config = Config()
@@ -47,6 +48,22 @@ def generate_hn_hour_topic(model_type, model_name):
 
     return report, report_file_path  # 返回报告内容和报告文件路径
 
+def generate_ph_hour_topic(model_type, model_name):
+    config.llm_model_type = model_type
+
+    if model_type == "openai":
+        config.openai_model_name = model_name
+    else:
+        config.ollama_model_name = model_name
+
+    llm = LLM(config)  # 创建语言模型实例
+    report_generator = ReportGenerator(llm, config.report_types)  # 创建报告生成器实例
+
+    client = ProductHuntClient()  # Create an instance first
+    markdown_file_path = client.export_top_products()  # Call the method on the instance
+    report, report_file_path = report_generator.generate_ph_topic_report(markdown_file_path)
+
+    return report, report_file_path  # 返回报告内容和报告文件路径
 
 # 定义一个回调函数，用于根据 Radio 组件的选择返回不同的 Dropdown 选项
 def update_model_list(model_type):
@@ -109,6 +126,29 @@ with gr.Blocks(title="GitHubSentinel") as demo:
 
         # 将按钮点击事件与导出函数绑定
         button.click(generate_hn_hour_topic, inputs=[model_type, model_name,], outputs=[markdown_output, file_output])
+
+    # 创建 Product Hunt 热点话题 Tab
+    with gr.Tab("Product Hunt 热点话题"):
+        gr.Markdown("## Product Hunt 热点话题")  # 添加小标题
+
+        # 创建 Radio 组件
+        model_type = gr.Radio(["openai", "ollama"], label="模型类型", info="使用 OpenAI GPT API 或 Ollama 私有化模型服务")
+
+        # 创建 Dropdown 组件
+        model_name = gr.Dropdown(choices=["gpt-4o", "gpt-4o-mini", "gpt-3.5-turbo"], label="选择模型")
+
+        # 使用 radio 组件的值来更新 dropdown 组件的选项
+        model_type.change(fn=update_model_list, inputs=model_type, outputs=model_name)
+
+        # 创建按钮来生成报告
+        button = gr.Button("生成最新热点话题")
+
+        # 设置输出组件
+        markdown_output = gr.Markdown()
+        file_output = gr.File(label="下载报告")
+
+        # 将按钮点击事件与导出函数绑定
+        button.click(generate_ph_hour_topic, inputs=[model_type, model_name,], outputs=[markdown_output, file_output])
 
 
 

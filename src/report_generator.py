@@ -88,6 +88,44 @@ class ReportGenerator:
                     markdown_content += file.read() + "\n"
         return markdown_content
 
+    def generate_ph_topic_report(self, markdown_file_path):
+        """Generate a report for Product Hunt topics."""
+        LOG.debug("开始生成 Product Hunt 话题报告")
+        
+        try:
+            with open(markdown_file_path, 'r', encoding='utf-8') as file:
+                markdown_content = file.read()
+            
+            # 使用预加载的 prompt
+            system_prompt = self.prompts.get("product_hunt")
+            if not system_prompt:
+                LOG.warning("未找到 Product Hunt 的 prompt，使用默认 prompt")
+                system_prompt = """请分析以下 Product Hunt 热门产品列表，并生成一份简洁的总结报告：
+
+{content}
+
+请包含以下内容：
+1. 总体趋势分析
+2. 最受关注的产品及其特点
+3. 值得关注的创新点
+
+请用中文输出，并使用 Markdown 格式。"""
+            
+            # 使用 generate_report 而不是 generate
+            report = self.llm.generate_report(system_prompt, markdown_content)
+            
+            # 生成报告文件
+            report_file_path = markdown_file_path.replace('.md', '_report.md')
+            with open(report_file_path, 'w', encoding='utf-8') as file:
+                file.write(report)
+                
+            LOG.info(f"Product Hunt 话题报告已生成：{report_file_path}")
+            return report, report_file_path
+            
+        except Exception as e:
+            LOG.error(f"生成 Product Hunt 话题报告时出错：{str(e)}")
+            return "生成报告时发生错误", None
+
 
 if __name__ == '__main__':
     from config import Config  # 导入配置管理类
